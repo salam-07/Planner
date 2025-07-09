@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan - Task Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="app-title">
+                    <i class="fas fa-tasks"></i>
+                    <h1>Plan</h1>
+                </div>
+                <div class="header-controls">
+                    <div class="task-counter">
+                        <span class="counter-badge active">{{ active_count }}</span>
+                        <span class="counter-badge completed">{{ completed_count }}</span>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Add Task Section -->
+        <section class="add-task-section">
+            <div class="glass-card">
+                <button class="add-task-btn" onclick="toggleAddForm()">
+                    <i class="fas fa-plus"></i>
+                    <span>Add New Task</span>
+                </button>
+                
+                <form class="add-task-form" id="addTaskForm" method="POST" action="{{ url_for('add_task') }}">
+                    <div class="form-group">
+                        <input type="text" name="title" placeholder="Task title" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea name="description" placeholder="Description (optional)" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <select name="category" required>
+                                <option value="">Category</option>
+                                <option value="Work">📊 Work</option>
+                                <option value="Personal">👤 Personal</option>
+                                <option value="Health">🏃 Health</option>
+                                <option value="Shopping">🛒 Shopping</option>
+                                <option value="Finance">💰 Finance</option>
+                                <option value="Learning">📚 Learning</option>
+                                <option value="Other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <select name="priority" required>
+                                <option value="">Priority</option>
+                                <option value="1">🔴 High</option>
+                                <option value="2">🟡 Medium</option>
+                                <option value="3">🟢 Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="toggleAddForm()">Cancel</button>
+                        <button type="submit" class="btn-primary">Add Task</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Active Tasks -->
+        <section class="tasks-section">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-clipboard-list"></i>
+                    Active Tasks
+                    <span class="task-count">{{ active_count }}</span>
+                </h2>
+            </div>
+            
+            {% if active_tasks %}
+                <div class="tasks-container">
+                    {% for task in active_tasks %}
+                    <div class="task-card" data-priority="{{ task.priority }}">
+                        <div class="task-content">
+                            <div class="task-header">
+                                <div class="task-meta">
+                                    <span class="task-category">{{ task.category }}</span>
+                                    <span class="task-priority priority-{{ task.priority }}">
+                                        {% if task.priority == 1 %}🔴 High
+                                        {% elif task.priority == 2 %}🟡 Medium
+                                        {% else %}🟢 Low{% endif %}
+                                    </span>
+                                </div>
+                                <div class="task-actions">
+                                    <button class="action-btn edit-btn" 
+                                            data-task-id="{{ task.id }}"
+                                            data-task-title="{{ task.title }}"
+                                            data-task-description="{{ task.description }}"
+                                            data-task-category="{{ task.category }}"
+                                            data-task-priority="{{ task.priority }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <h3 class="task-title">{{ task.title }}</h3>
+                            {% if task.description %}
+                            <p class="task-description">{{ task.description }}</p>
+                            {% endif %}
+                            <div class="task-footer">
+                                <span class="task-date">{{ task.created_at.strftime('%Y-%m-%d') if task.created_at else 'Recently' }}</span>
+                                <button class="complete-btn" data-task-id="{{ task.id }}">
+                                    <i class="fas fa-check"></i>
+                                    Complete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h3>No active tasks</h3>
+                    <p>Great! You're all caught up. Add a new task to get started.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Completed Tasks -->
+        {% if completed_tasks %}
+        <section class="tasks-section completed-section">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-check-circle"></i>
+                    Completed Tasks
+                    <span class="task-count">{{ completed_count }}</span>
+                </h2>
+            </div>
+            
+            <div class="tasks-container">
+                {% for task in completed_tasks %}
+                <div class="task-card completed">
+                    <div class="task-content">
+                        <div class="task-header">
+                            <div class="task-meta">
+                                <span class="task-category">{{ task.category }}</span>
+                                <span class="completed-badge">
+                                    <i class="fas fa-check"></i>
+                                    Completed
+                                </span>
+                            </div>
+                            <div class="task-actions">
+                                <button class="action-btn undo-btn" data-task-id="{{ task.id }}">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button class="action-btn delete-btn" data-task-id="{{ task.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="task-title">{{ task.title }}</h3>
+                        {% if task.description %}
+                        <p class="task-description">{{ task.description }}</p>
+                        {% endif %}
+                        <div class="task-footer">
+                            <span class="task-date">Completed {{ task.completed_at.strftime('%Y-%m-%d') if task.completed_at else 'Recently' }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Task</h3>
+                <button class="close-btn" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editTaskForm" method="POST">
+                <div class="form-group">
+                    <input type="text" name="title" id="editTitle" placeholder="Task title" required>
+                </div>
+                <div class="form-group">
+                    <textarea name="description" id="editDescription" placeholder="Description (optional)" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <select name="category" id="editCategory" required>
+                            <option value="">Category</option>
+                            <option value="Work">📊 Work</option>
+                            <option value="Personal">👤 Personal</option>
+                            <option value="Health">🏃 Health</option>
+                            <option value="Shopping">🛒 Shopping</option>
+                            <option value="Finance">💰 Finance</option>
+                            <option value="Learning">📚 Learning</option>
+                            <option value="Other">📝 Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select name="priority" id="editPriority" required>
+                            <option value="">Priority</option>
+                            <option value="1">🔴 High</option>
+                            <option value="2">🟡 Medium</option>
+                            <option value="3">🟢 Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            body.classList.toggle('dark-theme');
+            
+            if (body.classList.contains('dark-theme')) {
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeIcon.className = 'fas fa-sun';
+            }
+
+            // Event delegation for task actions
+            document.addEventListener('click', function(e) {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                const taskId = target.dataset.taskId;
+                
+                if (target.classList.contains('edit-btn')) {
+                    editTask(
+                        taskId,
+                        target.dataset.taskTitle,
+                        target.dataset.taskDescription,
+                        target.dataset.taskCategory,
+                        target.dataset.taskPriority
+                    );
+                } else if (target.classList.contains('delete-btn')) {
+                    deleteTask(taskId);
+                } else if (target.classList.contains('complete-btn')) {
+                    completeTask(taskId);
+                } else if (target.classList.contains('undo-btn')) {
+                    uncompleteTask(taskId);
+                }
+            });
+        });
+
+        // Add task form toggle
+        function toggleAddForm() {
+            const form = document.getElementById('addTaskForm');
+            form.classList.toggle('active');
+        }
+
+        // Task actions
+        function completeTask(taskId) {
+            window.location.href = `/complete_task/${taskId}`;
+        }
+
+        function uncompleteTask(taskId) {
+            window.location.href = `/uncomplete_task/${taskId}`;
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                window.location.href = `/delete_task/${taskId}`;
+            }
+        }
+
+        // Edit task modal
+        function editTask(id, title, description, category, priority) {
+            const modal = document.getElementById('editModal');
+            const form = document.getElementById('editTaskForm');
+            
+            document.getElementById('editTitle').value = title || '';
+            document.getElementById('editDescription').value = description || '';
+            document.getElementById('editCategory').value = category || '';
+            document.getElementById('editPriority').value = priority || '';
+            
+            form.action = `/edit_task/${id}`;
+            modal.classList.add('active');
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>
