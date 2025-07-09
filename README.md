@@ -1,7 +1,6 @@
 # Planner
-#### Video Demo: 
+#### Video Demo: https://youtu.be/DOOkEjItAQA
 #### Description:
-
 Planner is a task management web application made with Flask, SQL and HTML/CSS/JS. It allows users to add tasks they wish to accomplish. Tasks can be added with the following features:
 - A title, or name of the task
 - A description. This could be any subtasks or resources, and explanations linked to the task
